@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0e0e0f">
+<title>Ad → eBay</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg: #0e0e0f;
+    --surface: #18191c;
+    --surface2: #222327;
+    --border: #2e2f34;
+    --accent: #f5a623;
+    --accent2: #e8380d;
+    --text: #e8e8ea;
+    --muted: #6b6d75;
+    --green: #3ecf8e;
+    --red: #e84040;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    padding: 16px;
+    padding-bottom: 60px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2.4rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+  }
+
+  .sub {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  label.field-label {
+    display: block;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.62rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 5px;
+    margin-top: 12px;
+  }
+
+  input[type="text"],
+  input[type="password"],
+  input[type="number"],
+  select,
+  textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 0.9rem;
+    padding: 10px 12px;
+    border-radius: 6px;
+    outline: none;
+    resize: vertical;
+  }
+
+  input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+  select option { background: var(--surface2); }
+
+  /* THE KEY FIX: big visible native file input */
+  .file-pick-area {
+    background: var(--surface2);
+    border: 2px dashed var(--accent);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 12px;
+  }
+
+  .file-pick-area p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-bottom: 12px;
+  }
+
+  /* Make the file input fully visible and large — no tricks */
+  input[type="file"] {
+    display: block;
+    width: 100%;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    color: var(--text);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 10px;
+    cursor: pointer;
+  }
+
+  input[type="file"]::file-selector-button {
+    background: var(--accent);
+    color: #000;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-right: 10px;
+  }
+
+  #preview-img {
+    width: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    display: none;
+    margin-top: 10px;
+  }
+
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 6px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    text-align: center;
+    margin-top: 12px;
+  }
+
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-scan { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #000; }
+  .btn-ebay { background: #e53238; color: #fff; }
+  .btn-copy { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+
+  .status {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    text-align: center;
+    padding: 8px 0;
+    min-height: 28px;
+    color: var(--muted);
+  }
+
+  .status.working { color: var(--accent); }
+  .status.done { color: var(--green); }
+  .status.error { color: var(--red); }
+
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(0,0,0,0.2);
+    border-top-color: #000;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .info-card {
+    background: rgba(62,207,142,0.06);
+    border: 1px solid rgba(62,207,142,0.25);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--green);
+    line-height: 1.8;
+    white-space: pre-wrap;
+    margin-bottom: 14px;
+    display: none;
+  }
+
+  .info-card.show { display: block; }
+  #listing-section { display: none; }
+  #listing-section.show { display: block; }
+
+  .char-count {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.58rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 2px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Ad → eBay</h1>
+<div class="sub">AI Listing Generator — Snap or Upload Any Ad</div>
+
+<!-- API Key -->
+<div class="card">
+  <div class="card-title">🔑 Anthropic API Key</div>
+  <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off">
+  <button class="btn btn-copy" style="margin-top:8px;font-size:1rem;" onclick="saveKey()">Save Key</button>
+</div>
+
+<!-- Photo Upload -->
+<div class="card">
+  <div class="card-title">📸 Scan Advertisement</div>
+
+  <div class="file-pick-area">
+    <p>Choose a photo of your ad from your gallery or take a new one:</p>
+    <input type="file" id="photoInput" accept="image/*">
+  </div>
+
+  <img id="preview-img" alt="Preview">
+
+  <button class="btn btn-scan" id="scanBtn" onclick="analyzeAd()">
+    Scan & Build Listing
+  </button>
+  <div class="status" id="status">Load a photo to get started</div>
+</div>
+
+<!-- Listing Output -->
+<div class="card" id="listing-section">
+  <div class="card-title">🛒 eBay Listing</div>
+
+  <div class="info-card" id="infoCard"></div>
+
+  <label class="field-label">Title (AI)</label>
+  <input type="text" id="title" maxlength="80" oninput="updateCount()">
+  <div class="char-count" id="charCount">0 / 80</div>
+
+  <div class="field-row" style="margin-top:12px;">
+    <div>
+      <label class="field-label">Price ($)</label>
+      <input type="number" id="price" min="0" step="0.01">
+    </div>
+    <div>
+      <label class="field-label">Condition</label>
+      <select id="condition">
+        <option value="1000">Brand New</option>
+        <option value="1500">New Other</option>
+        <option value="3000" selected>Used</option>
+        <option value="4000">Very Good</option>
+        <option value="5000">Good</option>
+        <option value="6000">Acceptable</option>
+        <option value="7000">For Parts</option>
+      </select>
+    </div>
+  </div>
+
+  <label class="field-label">Description (AI)</label>
+  <textarea id="description" rows="5"></textarea>
+
+  <label class="field-label">Keywords (AI)</label>
+  <input type="text" id="keywords">
+
+  <div class="field-row" style="margin-top:12px;">
+    <div>
+      <label class="field-label">Category ID</label>
+      <input type="text" id="categoryId" placeholder="e.g. 9355">
+    </div>
+    <div>
+      <label class="field-label">Format</label>
+      <select id="listingType">
+        <option value="FixedPrice">Buy It Now</option>
+        <option value="Chinese">Auction</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn btn-ebay" onclick="openEbay()">🛒 List on eBay</button>
+  <button class="btn btn-copy" onclick="copyListing()">📋 Copy Listing</button>
+</div>
+
+<script>
+let imageBase64 = null;
+let imageMimeType = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+  const k = localStorage.getItem('anthropic_api_key');
+  if (k) document.getElementById('apiKey').value = k;
+
+  const input = document.getElementById('photoInput');
+  if (input) {
+    input.addEventListener('change', function() {
+      const file = this.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) return alert('Please select an image file');
+      imageMimeType = file.type;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        imageBase64 = ev.target.result.split(',')[1];
+        const img = document.getElementById('preview-img');
+        img.src = ev.target.result;
+        img.style.display = 'block';
+        const btn = document.getElementById('scanBtn');
+        btn.disabled = false;
+        btn.style.opacity = '1';
+        setStatus('\u2713 Photo loaded — tap Scan to build listing', 'done');
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+});
+
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (!k) return alert('Paste your key first');
+  localStorage.setItem('anthropic_api_key', k);
+  setStatus('✓ Key saved', 'done');
+}
+
+function handleFile(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!file.type.startsWith('image/')) return alert('Please select an image file');
+  imageMimeType = file.type;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imageBase64 = ev.result.split(',')[1];
+    const img = document.getElementById('preview-img');
+    img.src = ev.result;
+    img.style.display = 'block';
+    const btn = document.getElementById('scanBtn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+    btn.style.cursor = 'pointer';
+    setStatus('✓ Photo loaded — tap Scan to build listing', 'done');
+  };
+  reader.readAsDataURL(file);
+}
+
+async function analyzeAd() {
+  const key = document.getElementById('apiKey').value.trim();
+  if (!key) return alert('Enter and save your Anthropic API key first');
+  if (!imageBase64) return alert('Load a photo first');
+
+  document.getElementById('scanBtn').disabled = true;
+  document.getElementById('scanBtn').innerHTML = '<span class="spinner"></span>Analyzing...';
+  setStatus('Sending to Claude Vision...', 'working');
+
+  const prompt = `You are an expert eBay listing creator. Analyze this advertisement image and extract all product information.
+
+Respond ONLY with a valid JSON object, no markdown, no backticks:
+
+{
+  "title": "keyword-rich eBay title max 80 chars",
+  "price": 9.99,
+  "conditionCode": "3000",
+  "description": "3-5 sentence listing description",
+  "keywords": "comma,separated,keywords",
+  "suggestedCategory": "category name",
+  "brand": "brand or empty string",
+  "model": "model or empty string",
+  "extractedInfo": "2-3 line summary of what you found"
+}
+
+conditionCode: 1000=New, 3000=Used, 4000=Very Good, 5000=Good, 6000=Acceptable, 7000=For Parts.
+Use price from ad if shown, otherwise estimate fair market value.`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 1024,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: imageMimeType, data: imageBase64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      if (resp.status === 401) throw new Error('Invalid API key');
+      if (resp.status === 429) throw new Error('Rate limit — wait a moment and retry');
+      throw new Error(err.error?.message || 'HTTP ' + resp.status);
+    }
+
+    const data = await resp.json();
+    const raw = data.content?.map(b => b.text || '').join('') || '';
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const listing = JSON.parse(clean);
+    populateListing(listing);
+    setStatus('✓ Listing ready — review and tap List on eBay', 'done');
+
+  } catch (err) {
+    console.error(err);
+    setStatus('Error: ' + err.message, 'error');
+  } finally {
+    document.getElementById('scanBtn').disabled = false;
+    document.getElementById('scanBtn').innerHTML = 'Scan & Build Listing';
+  }
+}
+
+function populateListing(d) {
+  document.getElementById('title').value = d.title || '';
+  document.getElementById('price').value = d.price || '';
+  document.getElementById('description').value = d.description || '';
+  document.getElementById('keywords').value = d.keywords || '';
+
+  if (d.conditionCode) {
+    const sel = document.getElementById('condition');
+    for (let o of sel.options) if (o.value === String(d.conditionCode)) { sel.value = o.value; break; }
+  }
+
+  let info = '📋 Extracted:\n';
+  if (d.brand) info += 'Brand: ' + d.brand + '\n';
+  if (d.model) info += 'Model: ' + d.model + '\n';
+  if (d.suggestedCategory) info += 'Category: ' + d.suggestedCategory + '\n';
+  if (d.extractedInfo) info += d.extractedInfo;
+  const card = document.getElementById('infoCard');
+  card.textContent = info;
+  card.classList.add('show');
+
+  document.getElementById('listing-section').classList.add('show');
+  updateCount();
+}
+
+function openEbay() {
+  const title = encodeURIComponent(document.getElementById('title').value || '');
+  const price = document.getElementById('price').value || '';
+  const condition = document.getElementById('condition').value;
+  const format = document.getElementById('listingType').value;
+  const cid = document.getElementById('categoryId').value.trim();
+  const desc = encodeURIComponent(document.getElementById('description').value || '');
+  let url = 'https://www.ebay.com/sl/sell?title=' + title;
+  if (price) url += '&price=' + price;
+  url += '&condition=' + condition + '&format=' + format;
+  if (cid) url += '&cid=' + cid;
+  if (desc) url += '&description=' + desc;
+  window.open(url, '_blank');
+}
+
+function copyListing() {
+  const c = document.getElementById('condition');
+  const text = 'TITLE: ' + document.getElementById('title').value
+    + '\nPRICE: $' + document.getElementById('price').value
+    + '\nCONDITION: ' + (c.options[c.selectedIndex]?.text || '')
+    + '\n\nDESCRIPTION:\n' + document.getElementById('description').value
+    + '\n\nKEYWORDS: ' + document.getElementById('keywords').value;
+  navigator.clipboard.writeText(text).then(() => setStatus('✓ Copied!', 'done'));
+}
+
+function setStatus(msg, type) {
+  const el = document.getElementById('status');
+  el.textContent = msg;
+  el.className = 'status ' + (type || '');
+}
+
+function updateCount() {
+  const len = document.getElementById('title').value.length;
+  const el = document.getElementById('charCount');
+  el.textContent = len + ' / 80';
+  el.style.color = len > 72 ? '#f5a623' : len > 80 ? '#e84040' : '';
+}
+</script>
+</body>
+</html>
